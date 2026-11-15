@@ -3,18 +3,25 @@ package sumdu.edu.ua.web.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import sumdu.edu.ua.core.domain.Comment;
 import sumdu.edu.ua.core.exception.ValidationException;
 import sumdu.edu.ua.core.service.CommentService;
 import sumdu.edu.ua.web.dto.CreateCommentRequest;
 
+import java.util.List;
 import java.util.Map;
 
+/**
+ * REST-контролер коментарів (замінює CommentsServlet).
+ * Демонструє використання композитної анотації @RestController (@Controller + @ResponseBody).
+ */
 @RestController
 @RequestMapping("/comments")
 public class CommentController {
@@ -23,6 +30,11 @@ public class CommentController {
 
     public CommentController(CommentService commentService) {
         this.commentService = commentService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Comment>> getCommentsByBook(@RequestParam("bookId") Long bookId) {
+        return ResponseEntity.ok(commentService.getCommentsByBookId(bookId));
     }
 
     @PostMapping

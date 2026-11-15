@@ -9,16 +9,15 @@ import sumdu.edu.ua.core.exception.NotFoundException;
 import sumdu.edu.ua.core.exception.ValidationException;
 import sumdu.edu.ua.core.port.CatalogRepositoryPort;
 
+import java.time.Instant;
 import java.util.Set;
 
 @Service
 public class BookService {
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("id", "title", "author", "publishedAt");
 
-    // 1. Ін'єкція залежності через конструктор (Constructor Injection)
     private final CatalogRepositoryPort catalogRepository;
 
-    // 2. Ін'єкція залежності через поле (Field Injection) для демонстрації у Лаб 4
     @Autowired
     private CatalogAuditComponent auditComponent;
 
@@ -53,5 +52,17 @@ public class BookService {
         }
         return catalogRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Книгу з ID " + id + " не знайдено"));
+    }
+
+    public Book addBook(String title, String author, String description) {
+        if (title == null || title.trim().isEmpty()) {
+            throw new ValidationException("Назва книги не може бути порожньою");
+        }
+        if (author == null || author.trim().isEmpty()) {
+            throw new ValidationException("Автор книги не може бути порожнім");
+        }
+        Book book = new Book(null, title.trim(), author.trim(),
+                description != null ? description.trim() : "", Instant.now());
+        return catalogRepository.save(book);
     }
 }
