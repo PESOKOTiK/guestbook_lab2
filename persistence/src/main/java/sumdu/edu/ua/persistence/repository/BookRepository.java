@@ -1,0 +1,7 @@
+package sumdu.edu.ua.persistence.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import sumdu.edu.ua.persistence.entity.BookEntity;
+
+public interface BookRepository extends JpaRepository<BookEntity, Long> {
+}

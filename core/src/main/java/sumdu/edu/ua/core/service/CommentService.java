@@ -2,18 +2,20 @@ package sumdu.edu.ua.core.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import sumdu.edu.ua.core.domain.Book;
 import sumdu.edu.ua.core.domain.Comment;
+import sumdu.edu.ua.core.domain.User;
 import sumdu.edu.ua.core.exception.BusinessRuleConflictException;
 import sumdu.edu.ua.core.exception.NotFoundException;
 import sumdu.edu.ua.core.exception.ValidationException;
 import sumdu.edu.ua.core.port.CatalogRepositoryPort;
 import sumdu.edu.ua.core.port.CommentRepositoryPort;
+import sumdu.edu.ua.core.port.UserRepositoryPort;
 
-import java.time.Clock;
 import java.time.Duration;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -22,47 +24,59 @@ public class CommentService {
 
     private final CommentRepositoryPort commentRepository;
     private final CatalogRepositoryPort catalogRepository;
+    private final UserRepositoryPort userRepository;
 
-    @Autowired(required = false)
-    private Clock appClock = Clock.systemUTC();
-
-    @Autowired(required = false)
-    private CatalogAuditComponent auditComponent;
-
-    public CommentService(CommentRepositoryPort commentRepository, CatalogRepositoryPort catalogRepository) {
+    public CommentService(CommentRepositoryPort commentRepository,
+                          CatalogRepositoryPort catalogRepository,
+                          UserRepositoryPort userRepository) {
         this.commentRepository = commentRepository;
         this.catalogRepository = catalogRepository;
+        this.userRepository = userRepository;
     }
 
-    public List<Comment> getCommentsByBookId(Long bookId) {
+    @Transactional(readOnly = true)
+    public List<Comment> getCommentsByBook(Long bookId) {
         if (bookId == null || bookId <= 0) {
             throw new ValidationException("Некоректний ID книги");
         }
         return commentRepository.findByBookId(bookId);
     }
 
-    public Comment addComment(Long bookId, String author, String text) {
-        if (bookId == null || bookId <= 0) {
-            throw new ValidationException("ID книги є обов'язковим і має бути додатним");
+    @Transactional(readOnly = true)
+    public List<Comment> getCommentsByUser(Long userId) {
+        if (userId == null || userId <= 0) {
+            throw new ValidationException("Некоректний ID користувача");
         }
-        if (author == null || author.trim().isEmpty() || author.trim().length() > 100) {
-            throw new ValidationException("Ім'я автора має містити від 1 до 100 символів");
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Користувача з ID " + userId + " не знайдено"));
+        return commentRepository.findByUserId(userId);
+    }
+
+    @Transactional
+    public Comment addComment(Long bookId, Long userId, String text) {
+        if (bookId == null || bookId <= 0) {
+            throw new ValidationException("ID книги є обов'язковим");
+        }
+        if (userId == null || userId <= 0) {
+            throw new ValidationException("ID користувача є обов'язковим");
         }
         if (text == null || text.trim().isEmpty() || text.trim().length() > 1000) {
             throw new ValidationException("Текст відгуку має містити від 1 до 1000 символів");
         }
 
-        catalogRepository.findById(bookId)
+        Book book = catalogRepository.findById(bookId)
                 .orElseThrow(() -> new NotFoundException("Книгу з ID " + bookId + " не знайдено"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Користувача з ID " + userId + " не знайдено"));
 
-        Instant now = (appClock != null) ? Instant.now(appClock) : Instant.now();
-        Comment comment = new Comment(null, bookId, author.trim(), text.trim(), now);
+        Comment comment = new Comment(null, book, user, text.trim(), LocalDateTime.now());
         Comment saved = commentRepository.save(comment);
-        log.info("Comment created: commentId={}, bookId={}, author='{}', length={}",
-                saved.getId(), saved.getBookId(), saved.getAuthor(), saved.getText().length());
+        log.info("Comment saved via ORM: commentId={}, bookId={}, userId={}, username='{}'",
+                saved.getId(), book.getId(), user.getId(), user.getUsername());
         return saved;
     }
 
+    @Transactional
     public void deleteComment(Long commentId) {
         if (commentId == null || commentId <= 0) {
             throw new ValidationException("Некоректний ID коментаря");
@@ -70,18 +84,14 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new NotFoundException("Коментар з ID " + commentId + " не знайдено"));
 
-        Instant now = (appClock != null) ? Instant.now(appClock) : Instant.now();
-        int maxHours = (auditComponent != null) ? auditComponent.getMaxDeleteHours() : 24;
-
-        Duration age = Duration.between(comment.getCreatedAt(), now);
-        if (age.toHours() >= maxHours) {
+        Duration age = Duration.between(comment.getCreatedAt(), LocalDateTime.now());
+        if (age.toHours() >= 24) {
             throw new BusinessRuleConflictException(
-                    "Видалення відгуку заборонено: минуло більше " + maxHours + " годин з моменту створення (commentId=" + commentId + ")"
+                    "Видалення відгуку заборонено: минуло більше 24 годин (commentId=" + commentId + ")"
             );
         }
 
         commentRepository.deleteById(commentId);
-        log.info("Comment deleted: commentId={}, bookId={}, author='{}'",
-                comment.getId(), comment.getBookId(), comment.getAuthor());
+        log.info("Comment deleted via ORM: commentId={}", commentId);
     }
 }

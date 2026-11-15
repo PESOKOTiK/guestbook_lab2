@@ -1,21 +1,21 @@
 package sumdu.edu.ua.core.domain;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 public class Comment {
     private Long id;
-    private Long bookId;
-    private String author;
+    private Book book;
+    private User user;
     private String text;
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     public Comment() {
     }
 
-    public Comment(Long id, Long bookId, String author, String text, Instant createdAt) {
+    public Comment(Long id, Book book, User user, String text, LocalDateTime createdAt) {
         this.id = id;
-        this.bookId = bookId;
-        this.author = author;
+        this.book = book;
+        this.user = user;
         this.text = text;
         this.createdAt = createdAt;
     }
@@ -23,15 +23,15 @@ public class Comment {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Long getBookId() { return bookId; }
-    public void setBookId(Long bookId) { this.bookId = bookId; }
+    public Book getBook() { return book; }
+    public void setBook(Book book) { this.book = book; }
 
-    public String getAuthor() { return author; }
-    public void setAuthor(String author) { this.author = author; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 
     public String getText() { return text; }
     public void setText(String text) { this.text = text; }
 
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

@@ -32,11 +32,20 @@ class ArchitectureTest {
     }
 
     @Test
-    void coreShouldNotDependOnServletOrJdbc() {
+    void coreShouldNotDependOnServletOrJdbcOrJpa() {
         ArchRule rule = noClasses()
                 .that().resideInAPackage("..core..")
                 .should().dependOnClassesThat()
-                .resideInAnyPackage("jakarta.servlet..", "javax.servlet..", "java.sql..", "javax.sql..");
+                .resideInAnyPackage("jakarta.servlet..", "jakarta.persistence..", "java.sql..", "javax.sql..");
+        rule.check(importedClasses);
+    }
+
+    @Test
+    void noModuleShouldUseRawJdbc() {
+        ArchRule rule = noClasses()
+                .that().resideInAPackage("sumdu.edu.ua..")
+                .should().dependOnClassesThat()
+                .resideInAnyPackage("java.sql..", "javax.sql..");
         rule.check(importedClasses);
     }
 
