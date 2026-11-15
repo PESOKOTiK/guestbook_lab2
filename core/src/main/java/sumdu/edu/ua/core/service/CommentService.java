@@ -20,11 +20,9 @@ import java.util.List;
 public class CommentService {
     private static final Logger log = LoggerFactory.getLogger(CommentService.class);
 
-    // Ін'єкція головних портів через конструктор (Constructor Injection)
     private final CommentRepositoryPort commentRepository;
     private final CatalogRepositoryPort catalogRepository;
 
-    // Ін'єкція кастомного @Bean (Clock) та @Component через поле (Field Injection)
     @Autowired(required = false)
     private Clock appClock = Clock.systemUTC();
 
@@ -45,7 +43,7 @@ public class CommentService {
 
     public Comment addComment(Long bookId, String author, String text) {
         if (bookId == null || bookId <= 0) {
-            throw new ValidationException("ID книги є обов'язковим");
+            throw new ValidationException("ID книги є обов'язковим і має бути додатним");
         }
         if (author == null || author.trim().isEmpty() || author.trim().length() > 100) {
             throw new ValidationException("Ім'я автора має містити від 1 до 100 символів");

@@ -13,7 +13,7 @@ public class CatalogAuditComponent {
     private final int maxDeleteHours;
 
     public CatalogAuditComponent(
-            @Value("${spring.application.name:book-catalog}") String applicationTitle,
+            @Value("${spring.application.name:book-catalog-spring-mvc}") String applicationTitle,
             @Value("${catalog.comment.delete-window-hours:24}") int maxDeleteHours) {
         this.applicationTitle = applicationTitle;
         this.maxDeleteHours = maxDeleteHours;

@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import sumdu.edu.ua.core.exception.BusinessRuleConflictException;
@@ -16,8 +17,8 @@ import sumdu.edu.ua.web.dto.ErrorResponse;
 public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    @ExceptionHandler({ValidationException.class, IllegalArgumentException.class})
-    public ResponseEntity<ErrorResponse> handleValidation(RuntimeException ex, HttpServletRequest req) {
+    @ExceptionHandler({ValidationException.class, IllegalArgumentException.class, HttpMessageNotReadableException.class})
+    public ResponseEntity<ErrorResponse> handleValidation(Exception ex, HttpServletRequest req) {
         log.warn("Client error 400 Bad Request at {}: {}", req.getRequestURI(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(400, "Bad Request", ex.getMessage(), req.getRequestURI()));

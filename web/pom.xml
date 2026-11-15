@@ -19,14 +19,12 @@
             <artifactId>core</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- persistence підключається у runtime (Spring сканує пакети sumdu.edu.ua під час запуску, зберігаючи чистоту ArchUnit) -->
         <dependency>
             <groupId>sumdu.edu.ua</groupId>
             <artifactId>persistence</artifactId>
             <version>${project.version}</version>
             <scope>runtime</scope>
         </dependency>
-        <!-- Spring Boot Starter Web (включає Spring Core, Context, AutoConfiguration, Tomcat, Jackson, Logback) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
