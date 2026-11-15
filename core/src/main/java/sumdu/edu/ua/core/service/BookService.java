@@ -10,6 +10,8 @@ import sumdu.edu.ua.core.exception.ValidationException;
 import sumdu.edu.ua.core.port.CatalogRepositoryPort;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Set;
 
 @Service
@@ -54,15 +56,34 @@ public class BookService {
                 .orElseThrow(() -> new NotFoundException("Книгу з ID " + id + " не знайдено"));
     }
 
-    public Book addBook(String title, String author, String description) {
-        if (title == null || title.trim().isEmpty()) {
+    public Book addBook(Book book) {
+        if (book == null) {
+            throw new ValidationException("Дані книги не передані");
+        }
+        if (book.getTitle() == null || book.getTitle().trim().isEmpty()) {
             throw new ValidationException("Назва книги не може бути порожньою");
         }
-        if (author == null || author.trim().isEmpty()) {
+        if (book.getAuthor() == null || book.getAuthor().trim().isEmpty()) {
             throw new ValidationException("Автор книги не може бути порожнім");
         }
-        Book book = new Book(null, title.trim(), author.trim(),
-                description != null ? description.trim() : "", Instant.now());
+        int year = (book.getYear() != null) ? book.getYear() : LocalDate.now().getYear();
+        if (year < 1000 || year > LocalDate.now().getYear() + 1) {
+            throw new ValidationException("Некоректний рік видання: " + year);
+        }
+        book.setTitle(book.getTitle().trim());
+        book.setAuthor(book.getAuthor().trim());
+        book.setYear(year);
+        if (book.getDescription() == null) {
+            book.setDescription("");
+        }
+        if (book.getPublishedAt() == null) {
+            book.setPublishedAt(LocalDate.of(year, 1, 1).atStartOfDay(ZoneOffset.UTC).toInstant());
+        }
         return catalogRepository.save(book);
+    }
+
+    public Book addBook(String title, String author, String description) {
+        Book book = new Book(null, title, author, description, Instant.now());
+        return addBook(book);
     }
 }

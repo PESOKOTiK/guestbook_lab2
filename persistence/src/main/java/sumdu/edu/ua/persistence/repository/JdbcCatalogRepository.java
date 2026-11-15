@@ -44,7 +44,7 @@ public class JdbcCatalogRepository implements CatalogRepositoryPort {
 
         String sortColumn = SORT_COLUMNS.getOrDefault(pageRequest.getSort(), "id");
         String countSql = "SELECT COUNT(*) FROM books" + whereClause;
-        String dataSql = "SELECT id, title, author, description, published_at FROM books"
+        String dataSql = "SELECT id, title, author, pub_year, description, published_at FROM books"
                 + whereClause
                 + " ORDER BY " + sortColumn + " ASC LIMIT ? OFFSET ?";
 
@@ -88,7 +88,7 @@ public class JdbcCatalogRepository implements CatalogRepositoryPort {
 
     @Override
     public Optional<Book> findById(Long id) {
-        String sql = "SELECT id, title, author, description, published_at FROM books WHERE id = ?";
+        String sql = "SELECT id, title, author, pub_year, description, published_at FROM books WHERE id = ?";
         try (Connection conn = dbManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
@@ -105,13 +105,14 @@ public class JdbcCatalogRepository implements CatalogRepositoryPort {
 
     @Override
     public Book save(Book book) {
-        String sql = "INSERT INTO books (title, author, description, published_at) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO books (title, author, pub_year, description, published_at) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = dbManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, book.getTitle());
             ps.setString(2, book.getAuthor());
-            ps.setString(3, book.getDescription());
-            ps.setTimestamp(4, Timestamp.from(book.getPublishedAt()));
+            ps.setInt(3, book.getYear());
+            ps.setString(4, book.getDescription());
+            ps.setTimestamp(5, Timestamp.from(book.getPublishedAt()));
             ps.executeUpdate();
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (keys.next()) {
@@ -129,6 +130,7 @@ public class JdbcCatalogRepository implements CatalogRepositoryPort {
                 rs.getLong("id"),
                 rs.getString("title"),
                 rs.getString("author"),
+                rs.getInt("pub_year"),
                 rs.getString("description"),
                 rs.getTimestamp("published_at").toInstant()
         );

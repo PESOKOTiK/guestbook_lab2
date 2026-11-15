@@ -66,20 +66,21 @@ public class DatabaseManager {
     }
 
     private void seedInitialData(Connection conn) throws SQLException {
-        String insertBook = "INSERT INTO books (title, author, description, published_at) VALUES (?, ?, ?, ?)";
+        String insertBook = "INSERT INTO books (title, author, pub_year, description, published_at) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(insertBook)) {
             Object[][] books = {
-                {"Clean Architecture", "Robert C. Martin", "A Craftsman's Guide to Software Structure and Design", Instant.parse("2017-09-10T00:00:00Z")},
-                {"Domain-Driven Design", "Eric Evans", "Tackling Complexity in the Heart of Software", Instant.parse("2003-08-20T00:00:00Z")},
-                {"Designing Data-Intensive Applications", "Martin Kleppmann", "The Big Ideas Behind Reliable, Scalable, and Maintainable Systems", Instant.parse("2017-03-16T00:00:00Z")},
-                {"Effective Java", "Joshua Bloch", "Best practices for the Java platform", Instant.parse("2018-01-06T00:00:00Z")},
-                {"Refactoring", "Martin Fowler", "Improving the Design of Existing Code", Instant.parse("2018-11-19T00:00:00Z")}
+                {"Clean Architecture", "Robert C. Martin", 2017, "A Craftsman's Guide to Software Structure and Design", Instant.parse("2017-09-10T00:00:00Z")},
+                {"The Art of Computer Programming", "Donald E. Knuth", 1968, "Fundamental Algorithms (Rare Classic Edition)", Instant.parse("1968-01-01T00:00:00Z")},
+                {"Designing Data-Intensive Applications", "Martin Kleppmann", 2017, "The Big Ideas Behind Reliable, Scalable, and Maintainable Systems", Instant.parse("2017-03-16T00:00:00Z")},
+                {"Design Patterns (GoF)", "Erich Gamma et al.", 1994, "Elements of Reusable Object-Oriented Software (Rare Edition)", Instant.parse("1994-10-21T00:00:00Z")},
+                {"Effective Java", "Joshua Bloch", 2018, "Best practices for the Java platform", Instant.parse("2018-01-06T00:00:00Z")}
             };
             for (Object[] b : books) {
                 ps.setString(1, (String) b[0]);
                 ps.setString(2, (String) b[1]);
-                ps.setString(3, (String) b[2]);
-                ps.setTimestamp(4, Timestamp.from((Instant) b[3]));
+                ps.setInt(3, (Integer) b[2]);
+                ps.setString(4, (String) b[3]);
+                ps.setTimestamp(5, Timestamp.from((Instant) b[4]));
                 ps.executeUpdate();
             }
         }

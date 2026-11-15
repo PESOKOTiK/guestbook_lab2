@@ -18,10 +18,6 @@ import sumdu.edu.ua.web.dto.CreateCommentRequest;
 import java.util.List;
 import java.util.Map;
 
-/**
- * REST-контролер коментарів (замінює CommentsServlet).
- * Демонструє використання композитної анотації @RestController (@Controller + @ResponseBody).
- */
 @RestController
 @RequestMapping("/comments")
 public class CommentController {
