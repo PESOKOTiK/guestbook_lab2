@@ -43,7 +43,7 @@
                                 </p>
 
                                 <!-- Умовний блок для раритетних видань (< 2000 року) -->
-                                <#if year?number < 2000>
+                                <#if year < 2000>
                                     <div style="margin-top:14px; padding:10px 14px; background-color:#fef3c7; border:1px solid #f59e0b; border-radius:5px;">
                                         <p style="margin:0; color:#a36b00; font-size:14px;">
                                             <b>Раритетне видання!</b> Книга видана до 2000 року (${year?c} р.) та становить особливу бібліографічну цінність.
