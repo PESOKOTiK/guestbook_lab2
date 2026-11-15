@@ -1,0 +1,11 @@
+package sumdu.edu.ua.persistence.config;
+
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+
+@Configuration
+@EntityScan(basePackages = "sumdu.edu.ua.persistence.entity")
+@EnableJpaRepositories(basePackages = "sumdu.edu.ua.persistence.repository")
+public class JpaConfig {
+}
