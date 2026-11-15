@@ -1,7 +1,11 @@
 package sumdu.edu.ua.persistence.db;
 
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -18,13 +22,18 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.stream.Collectors;
 
+@Component
 public class DatabaseManager {
     private static final Logger log = LoggerFactory.getLogger(DatabaseManager.class);
     private final String url;
     private final String user;
     private final String password;
 
-    public DatabaseManager(String url, String user, String password) {
+    @Autowired
+    public DatabaseManager(
+            @Value("${spring.datasource.url:jdbc:h2:mem:catalogdb;DB_CLOSE_DELAY=-1}") String url,
+            @Value("${spring.datasource.username:sa}") String user,
+            @Value("${spring.datasource.password:}") String password) {
         this.url = url;
         this.user = user;
         this.password = password;
@@ -34,6 +43,7 @@ public class DatabaseManager {
         return DriverManager.getConnection(url, user, password);
     }
 
+    @PostConstruct
     public void initSchemaAndSeedData() {
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             InputStream is = getClass().getClassLoader().getResourceAsStream("schema.sql");
@@ -48,7 +58,7 @@ public class DatabaseManager {
                     seedInitialData(conn);
                 }
             }
-            log.info("H2 database schema initialized and verified successfully");
+            log.info("H2 database schema initialized via @PostConstruct lifecycle callback (url={})", url);
         } catch (Exception e) {
             log.error("Failed to initialize H2 database schema", e);
             throw new RuntimeException("Database initialization error", e);
@@ -74,7 +84,6 @@ public class DatabaseManager {
             }
         }
 
-        // Seed 1 recent comment (< 24h) and 1 old comment (> 48h) to easily test 24h deletion rule
         String insertComment = "INSERT INTO comments (book_id, author, text, created_at) VALUES (?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(insertComment)) {
             ps.setLong(1, 1L);

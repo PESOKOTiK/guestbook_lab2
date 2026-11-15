@@ -2,6 +2,8 @@ package sumdu.edu.ua.core.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import sumdu.edu.ua.core.domain.Comment;
 import sumdu.edu.ua.core.exception.BusinessRuleConflictException;
 import sumdu.edu.ua.core.exception.NotFoundException;
@@ -9,14 +11,25 @@ import sumdu.edu.ua.core.exception.ValidationException;
 import sumdu.edu.ua.core.port.CatalogRepositoryPort;
 import sumdu.edu.ua.core.port.CommentRepositoryPort;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+@Service
 public class CommentService {
     private static final Logger log = LoggerFactory.getLogger(CommentService.class);
+
+    // Ін'єкція головних портів через конструктор (Constructor Injection)
     private final CommentRepositoryPort commentRepository;
     private final CatalogRepositoryPort catalogRepository;
+
+    // Ін'єкція кастомного @Bean (Clock) та @Component через поле (Field Injection)
+    @Autowired(required = false)
+    private Clock appClock = Clock.systemUTC();
+
+    @Autowired(required = false)
+    private CatalogAuditComponent auditComponent;
 
     public CommentService(CommentRepositoryPort commentRepository, CatalogRepositoryPort catalogRepository) {
         this.commentRepository = commentRepository;
@@ -44,7 +57,8 @@ public class CommentService {
         catalogRepository.findById(bookId)
                 .orElseThrow(() -> new NotFoundException("Книгу з ID " + bookId + " не знайдено"));
 
-        Comment comment = new Comment(null, bookId, author.trim(), text.trim(), Instant.now());
+        Instant now = (appClock != null) ? Instant.now(appClock) : Instant.now();
+        Comment comment = new Comment(null, bookId, author.trim(), text.trim(), now);
         Comment saved = commentRepository.save(comment);
         log.info("Comment created: commentId={}, bookId={}, author='{}', length={}",
                 saved.getId(), saved.getBookId(), saved.getAuthor(), saved.getText().length());
@@ -58,10 +72,13 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new NotFoundException("Коментар з ID " + commentId + " не знайдено"));
 
-        Duration age = Duration.between(comment.getCreatedAt(), Instant.now());
-        if (age.toHours() >= 24) {
+        Instant now = (appClock != null) ? Instant.now(appClock) : Instant.now();
+        int maxHours = (auditComponent != null) ? auditComponent.getMaxDeleteHours() : 24;
+
+        Duration age = Duration.between(comment.getCreatedAt(), now);
+        if (age.toHours() >= maxHours) {
             throw new BusinessRuleConflictException(
-                    "Видалення відгуку заборонено: минуло більше 24 годин з моменту створення (commentId=" + commentId + ")"
+                    "Видалення відгуку заборонено: минуло більше " + maxHours + " годин з моменту створення (commentId=" + commentId + ")"
             );
         }
 

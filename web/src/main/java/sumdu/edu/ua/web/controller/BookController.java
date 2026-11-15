@@ -1,10 +1,14 @@
 package sumdu.edu.ua.web.controller;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import sumdu.edu.ua.core.domain.Book;
 import sumdu.edu.ua.core.domain.Comment;
 import sumdu.edu.ua.core.domain.Page;
@@ -12,68 +16,57 @@ import sumdu.edu.ua.core.exception.ValidationException;
 import sumdu.edu.ua.core.service.BookService;
 import sumdu.edu.ua.core.service.CommentService;
 import sumdu.edu.ua.web.dto.BookDetailsResponse;
-import sumdu.edu.ua.web.util.JsonResponseWriter;
 
-import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
-@WebServlet(name = "BookController", urlPatterns = {"/books", "/books/*"})
-public class BookController extends HttpServlet {
-    private BookService bookService;
-    private CommentService commentService;
+@RestController
+@RequestMapping("/books")
+public class BookController {
 
-    @Override
-    public void init() throws ServletException {
-        this.bookService = (BookService) getServletContext().getAttribute("bookService");
-        this.commentService = (CommentService) getServletContext().getAttribute("commentService");
+    // 1. Ін'єкція сервісів через конструктор (Constructor Injection)
+    private final BookService bookService;
+    private final CommentService commentService;
+
+    // 2. Ін'єкція кастомного @Bean через поле (Field Injection)
+    @Autowired
+    @Qualifier("catalogMetadataBean")
+    private Map<String, Object> catalogMetadata;
+
+    @Value("${catalog.default-page-size:10}")
+    private int defaultPageSize;
+
+    public BookController(BookService bookService, CommentService commentService) {
+        this.bookService = bookService;
+        this.commentService = commentService;
     }
 
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        try {
-            String pathInfo = req.getPathInfo();
-            if (pathInfo == null || pathInfo.equals("/")) {
-                handleListBooks(req, resp);
-            } else {
-                handleGetBookById(pathInfo, resp);
-            }
-        } catch (Exception ex) {
-            JsonResponseWriter.handleException(req, resp, ex);
-        }
+    @GetMapping
+    public ResponseEntity<Page<Book>> listBooks(
+            @RequestParam(name = "q", required = false) String q,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", required = false) Integer size,
+            @RequestParam(name = "sort", defaultValue = "id") String sort) {
+        int effectiveSize = (size != null) ? size : defaultPageSize;
+        Page<Book> result = bookService.searchBooks(q, page, effectiveSize, sort);
+        return ResponseEntity.ok(result);
     }
 
-    private void handleListBooks(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String q = req.getParameter("q");
-        int page = parseIntParam(req.getParameter("page"), 0, "page");
-        int size = parseIntParam(req.getParameter("size"), 10, "size");
-        String sort = req.getParameter("sort");
-
-        Page<Book> result = bookService.searchBooks(q, page, size, sort);
-        JsonResponseWriter.writeJson(resp, HttpServletResponse.SC_OK, result);
-    }
-
-    private void handleGetBookById(String pathInfo, HttpServletResponse resp) throws IOException {
-        String idStr = pathInfo.substring(1);
+    @GetMapping("/{id}")
+    public ResponseEntity<BookDetailsResponse> getBookById(@PathVariable("id") String rawId) {
         Long id;
         try {
-            id = Long.parseLong(idStr);
+            id = Long.parseLong(rawId);
         } catch (NumberFormatException e) {
-            throw new ValidationException("Некоректний числовий формат ID книги: " + idStr);
+            throw new ValidationException("Некоректний числовий формат ID книги: " + rawId);
         }
-
         Book book = bookService.getBookById(id);
         List<Comment> comments = commentService.getCommentsByBookId(id);
-        JsonResponseWriter.writeJson(resp, HttpServletResponse.SC_OK, new BookDetailsResponse(book, comments));
+        return ResponseEntity.ok(new BookDetailsResponse(book, comments));
     }
 
-    private int parseIntParam(String value, int defaultVal, String paramName) {
-        if (value == null || value.isBlank()) {
-            return defaultVal;
-        }
-        try {
-            return Integer.parseInt(value.trim());
-        } catch (NumberFormatException e) {
-            throw new ValidationException("Параметр '" + paramName + "' має бути цілим числом");
-        }
+    @GetMapping("/info")
+    public ResponseEntity<Map<String, Object>> getCatalogInfo() {
+        return ResponseEntity.ok(catalogMetadata);
     }
 }

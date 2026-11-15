@@ -19,42 +19,21 @@
             <artifactId>core</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <!-- persistence підключається у runtime для ініціалізації контейнера та тестів архітектури -->
+        <!-- persistence підключається у runtime (Spring сканує пакети sumdu.edu.ua під час запуску, зберігаючи чистоту ArchUnit) -->
         <dependency>
             <groupId>sumdu.edu.ua</groupId>
             <artifactId>persistence</artifactId>
             <version>${project.version}</version>
             <scope>runtime</scope>
         </dependency>
-        <!-- Мікрофреймворк Javalin (Лабораторна робота №3) -->
+        <!-- Spring Boot Starter Web (включає Spring Core, Context, AutoConfiguration, Tomcat, Jackson, Logback) -->
         <dependency>
-            <groupId>io.javalin</groupId>
-            <artifactId>javalin</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
         <dependency>
-            <groupId>jakarta.servlet</groupId>
-            <artifactId>jakarta.servlet-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -68,12 +47,10 @@
         <finalName>book-catalog</finalName>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>sumdu.edu.ua.web.JavalinBookApp</mainClass>
-                    <includePluginDependencies>false</includePluginDependencies>
+                    <mainClass>sumdu.edu.ua.web.SpringBootBookApp</mainClass>
                 </configuration>
             </plugin>
         </plugins>

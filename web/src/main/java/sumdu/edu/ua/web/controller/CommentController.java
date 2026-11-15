@@ -1,90 +1,45 @@
 package sumdu.edu.ua.web.controller;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import sumdu.edu.ua.core.domain.Comment;
 import sumdu.edu.ua.core.exception.ValidationException;
 import sumdu.edu.ua.core.service.CommentService;
 import sumdu.edu.ua.web.dto.CreateCommentRequest;
-import sumdu.edu.ua.web.util.JsonResponseWriter;
 
-import java.io.IOException;
 import java.util.Map;
 
-@WebServlet(name = "CommentController", urlPatterns = {"/comments", "/comments/*"})
-public class CommentController extends HttpServlet {
-    private CommentService commentService;
+@RestController
+@RequestMapping("/comments")
+public class CommentController {
 
-    @Override
-    public void init() throws ServletException {
-        this.commentService = (CommentService) getServletContext().getAttribute("commentService");
+    private final CommentService commentService;
+
+    public CommentController(CommentService commentService) {
+        this.commentService = commentService;
     }
 
-    @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        try {
-            Long bookId;
-            String author;
-            String text;
-
-            String contentType = req.getContentType();
-            if (contentType != null && contentType.contains("application/json")) {
-                CreateCommentRequest body = JsonResponseWriter.getMapper()
-                        .readValue(req.getInputStream(), CreateCommentRequest.class);
-                bookId = body.getBookId();
-                author = body.getAuthor();
-                text = body.getText();
-            } else {
-                String bookIdParam = req.getParameter("bookId");
-                if (bookIdParam == null) {
-                    throw new ValidationException("Параметр 'bookId' є обов'язковим");
-                }
-                try {
-                    bookId = Long.parseLong(bookIdParam);
-                } catch (NumberFormatException e) {
-                    throw new ValidationException("Некоректний формат 'bookId'");
-                }
-                author = req.getParameter("author");
-                text = req.getParameter("text");
-            }
-
-            Comment created = commentService.addComment(bookId, author, text);
-            JsonResponseWriter.writeJson(resp, HttpServletResponse.SC_CREATED, created);
-        } catch (Exception ex) {
-            JsonResponseWriter.handleException(req, resp, ex);
-        }
+    @PostMapping
+    public ResponseEntity<Comment> createComment(@RequestBody CreateCommentRequest req) {
+        Comment created = commentService.addComment(req.getBookId(), req.getAuthor(), req.getText());
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @Override
-    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> deleteComment(@PathVariable("id") String rawId) {
+        Long commentId;
         try {
-            String pathInfo = req.getPathInfo();
-            Long commentId = null;
-
-            if (pathInfo != null && pathInfo.length() > 1) {
-                try {
-                    commentId = Long.parseLong(pathInfo.substring(1));
-                } catch (NumberFormatException e) {
-                    throw new ValidationException("Некоректний ID коментаря у шляху: " + pathInfo.substring(1));
-                }
-            } else if (req.getParameter("id") != null) {
-                try {
-                    commentId = Long.parseLong(req.getParameter("id"));
-                } catch (NumberFormatException e) {
-                    throw new ValidationException("Некоректний параметр 'id'");
-                }
-            } else {
-                throw new ValidationException("Не вказано ID коментаря для видалення");
-            }
-
-            commentService.deleteComment(commentId);
-            JsonResponseWriter.writeJson(resp, HttpServletResponse.SC_OK,
-                    Map.of("status", "deleted", "commentId", commentId));
-        } catch (Exception ex) {
-            JsonResponseWriter.handleException(req, resp, ex);
+            commentId = Long.parseLong(rawId);
+        } catch (NumberFormatException e) {
+            throw new ValidationException("Некоректний ID коментаря: " + rawId);
         }
+        commentService.deleteComment(commentId);
+        return ResponseEntity.ok(Map.of("status", "deleted", "commentId", commentId));
     }
 }

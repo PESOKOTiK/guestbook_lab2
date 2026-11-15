@@ -1,5 +1,6 @@
 package sumdu.edu.ua.persistence.repository;
 
+import org.springframework.stereotype.Repository;
 import sumdu.edu.ua.core.domain.Comment;
 import sumdu.edu.ua.core.port.CommentRepositoryPort;
 import sumdu.edu.ua.persistence.db.DatabaseManager;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public class JdbcCommentRepository implements CommentRepositoryPort {
     private final DatabaseManager dbManager;
 

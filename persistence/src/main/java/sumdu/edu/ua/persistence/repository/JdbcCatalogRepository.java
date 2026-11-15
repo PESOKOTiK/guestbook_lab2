@@ -1,5 +1,6 @@
 package sumdu.edu.ua.persistence.repository;
 
+import org.springframework.stereotype.Repository;
 import sumdu.edu.ua.core.domain.Book;
 import sumdu.edu.ua.core.domain.Page;
 import sumdu.edu.ua.core.domain.PageRequest;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@Repository
 public class JdbcCatalogRepository implements CatalogRepositoryPort {
     private static final Map<String, String> SORT_COLUMNS = Map.of(
             "id", "id",
